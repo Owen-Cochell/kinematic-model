@@ -15,7 +15,9 @@ Processors can do many things, including but not limited to:
  - Logging container information for debugging
 """
 
-from pmodel.containers import BaseContainer
+import pymap3d as pm
+
+from pmodel.containers import BaseContainer, Coordinates, Position
 from pmodel.globals import org_lat, org_long, org_alt
 
 
@@ -173,6 +175,100 @@ class SetOriginProcessor(BaseProcessor):
         # Return the container:
 
         return container
+
+
+def time_to_seconds(container: BaseContainer) -> BaseContainer:
+    """
+    Converts the time in the container to seconds.
+    We assume the time is in milliseconds.
+
+    Args:
+        container (BaseContainer): Container to alter
+
+    Returns:
+        BaseContainer: Container with time in seconds
+    """
+
+    container.time /= 1000
+
+    return container
+
+
+def standardize_coords(container: BaseContainer) -> BaseContainer:
+    """
+    Converts all values in the container to floats.
+
+    Args:
+        container (BaseContainer): Container to alter
+
+    Returns:
+        BaseContainer: New container with float values
+    """
+
+    container.lat /= 1e7
+    container.long /= 1e7
+    container.alt /= 1000
+
+    return container
+
+
+def to_mps(container: BaseContainer) -> BaseContainer:
+    """
+    Converts the velocity in the container to meters per second.
+
+    Args:
+        container (BaseContainer): Container to alter
+
+    Returns:
+        BaseContainer: Container with velocity in meters per second
+    """
+
+    container.vx /= 100
+    container.vy /= 100
+    container.vz /= 100
+
+    return container
+
+
+def invert_zvel(container: BaseContainer) -> BaseContainer:
+    """
+    Inverts the Z velocity in the container.
+
+    Args:
+        container (BaseContainer): Container to alter
+
+    Returns:
+        BaseContainer: Container with inverted Z velocity
+    """
+
+    container.vz *= -1
+
+    return container
+
+
+def to_enu(container: Coordinates) -> Position:
+    """
+    Converts the container from global coordinates
+    to local ENU coordinates.
+
+    Args:
+        container (Coordinates): Coordinates container to convert
+
+    Returns:
+        Position: New container with local ENU coordinates
+    """
+
+    global org_lat, org_long, org_alt
+
+    # Convert to ENU:
+
+    x, y, z = pm.geodetic2enu(container.lat, container.long, container.alt, org_lat, org_long, org_alt)
+
+    # Create the new container:
+
+    new_container = Position(container.time, x, y, z, container.vx, container.vy, container.vz)
+
+    return new_container
 
 
 def null_process(container: BaseContainer) -> BaseContainer:

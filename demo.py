@@ -2,6 +2,8 @@
 This file showcases the functionality of the pmodel library.    
 """
 
+import json
+
 from pmodel.containers import Coordinates
 from pmodel.pipeline import Pipeline
 from pmodel.processors import *
@@ -14,20 +16,38 @@ pipeline = Pipeline()
 # Add some processors to the pipeline:
 
 pipeline.append(print_process)
-pipeline.append(null_process)
 pipeline.append(TimeZeroProcessor())
-pipeline.append(print_process)
+pipeline.append(time_to_seconds)
+pipeline.append(standardize_coords)
+pipeline.append(to_mps)
+pipeline.append(invert_zvel)
 pipeline.append(SetOriginProcessor())
+pipeline.append(to_enu)
 
-# Create a container:
+# Load JSON data:
 
-container = Coordinates(5, 1, 1, 1, 1, 1, 1)
-container2 = Coordinates(7, 2, 2, 2, 2, 2, 2)
+data = None
+with open("data/data_20092023-15:33:03(more_movement).json", "r") as f:
+    data = json.load(f)
 
-# Process first container:
+# Iterate over JSON data:
 
-pipeline(container)
+for container in data:
 
-# Process second container:
+    # For now, filter our attitude data:
 
-pipeline(container2)
+    if container["mavpackettype"] == "ATTITUDE":
+
+        continue
+
+    # Create a container from JSON data:
+
+    container = Coordinates.from_json(container)
+
+    # Process container:
+
+    done = pipeline(container)
+
+    # Print container:
+
+    print(done)

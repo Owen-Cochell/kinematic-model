@@ -6,6 +6,8 @@ These containers are usually constructed using incoming data,
 which are then used elsewhere in the model for computations.
 """
 
+from __future__ import annotations
+
 
 class BaseContainer:
     """
@@ -83,7 +85,7 @@ class Coordinates(BaseContainer):
     Add relative altitude, if that is useful
     """
 
-    def __init__(self, time: int, lat: float, long: float, alt: float, vlat: float, vlong: float, valt: float) -> None:
+    def __init__(self, time: int, lat: float, long: float, alt: float, vx: float, vy: float, vz: float) -> None:
 
         super().__init__(time)
 
@@ -95,12 +97,37 @@ class Coordinates(BaseContainer):
 
         # Position velocities:
 
-        self.vlat = vlat
-        self.vlong = vlong
-        self.valt = valt
+        self.vx = vx
+        self.vy = vy
+        self.vz = vz
 
     def __str__(self) -> str:
         return super().__str__() + f", Lat: {self.lat}, Long: {self.long}, Alt: {self.alt}"
+
+    @staticmethod
+    def from_json(json: dict) -> Coordinates:
+        """
+        Creates a new container from a JSON object.
+        We utilize the following attributes to create this container:
+
+        - time = time_boot_ms
+        - lat = lat
+        - long = lon
+        - alt = alt
+        - vx = vx
+        - vy = vy
+        - vz = vz
+
+        Args:
+            json (dict): JSON data to utilize
+
+        Returns:
+            Coordinates: New Coordinate container
+        """
+
+        print(json)
+
+        return Coordinates(json["time_boot_ms"], json["lat"], json["lon"], json["alt"], json["vx"], json["vy"], json["vz"])
 
 
 class Position(BaseContainer):
